@@ -47,12 +47,10 @@ The system implements a critical Finite State Machine (FSM) based on the simulat
 
 The Load Shedding command is executed by manipulating the 32-bit PDU Register (`ul_PDU_Register`).
 
-* **Load Shedding Action:** Non-essential loads (`PAYLOAD`, `HEATER`) are **turned OFF** using **Bitwise AND (&) and NOT (~):**
-    
-    ```c
-    PDU Register &= ~(PAYLOAD | HEATER)
-    ```
+* **Load Shedding Action:** Non-essential loads (`PAYLOAD`, `HEATER`) are **turned OFF** using **Bitwise AND ($\&$) and NOT ($\sim$):**
+    $$\texttt{PDU} \text{ Register} \quad \mathbf{\&=} \quad \mathbf{\sim (} \texttt{PAYLOAD} \mathbf{\mid} \texttt{HEATER} \mathbf{)}$$
     *(This clears the two bits while preserving the essential COMMS bit.)*
+
 ---
 
 ## C. Verification & Validation (V&V) Interface
@@ -89,4 +87,6 @@ HARVEST: Input: 1.51 W | ... | Voltage: 10.03 V [V&V ALERT] Low Voltage Detected
     ```bash
     pio run -t upload
     ```
+
 4.  **Monitor:** Close the PlatformIO Monitor and use the linked **V&V Tool** to monitor and validate the serial output.
+
