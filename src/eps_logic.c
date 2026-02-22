@@ -3,6 +3,7 @@
 #include "freertos/semphr.h"
 #include <stdio.h>
 #include "eps_telemetry.h"
+#include "eps_commands.h"
 
 
 eps_mode_t current_mode = EPS_MODE_NOMINAL;
@@ -16,6 +17,7 @@ void vEPS_Manager_Task(void *pvParameters){
         // I need to access the shared telemetry data (g_eps_telemetry)
         if (xSemaphoreTake(xEPSDataMutex, portMAX_DELAY) == pdTRUE) {
             
+            EPS_Monitor(g_eps_telemetry.f_BusVoltage); // Check for faults and report to FDIR
             // --- CORE STATE MACHINE LOGIC ---
             switch (current_mode) {
 
@@ -24,6 +26,14 @@ void vEPS_Manager_Task(void *pvParameters){
                     if (g_eps_telemetry.f_BusVoltage < EPS_VOLTAGE_CRITICAL_LOW) {
                         current_mode = EPS_MODE_LOW_VOLTAGE;
                         printf("MANAGER: CRITICAL! Voltage below %.1fV. Entering LOW_VOLTAGE Mode.\n", EPS_VOLTAGE_CRITICAL_LOW);
+
+                        FaultReport_t low_v_fault = {
+                            .source = SRC_EPS,
+                            .severity = FAULT_CRITICAL,
+                            .fault_code = FAULT_EPS_LOW_VOLTAGE,
+                            .timestamp = Time_GetSeconds()
+                        };
+                        FDIR_ReportFault(low_v_fault);
                     }
                     break;
 
@@ -56,7 +66,7 @@ void vEPS_Manager_Task(void *pvParameters){
         }
 
         // The Manager Task runs frequently to respond fast to faults.
-        vTaskDelay(pdMS_TO_TICKS(10)); 
+        vTaskDelay(pdMS_TO_TICKS(100)); 
     }
 }
 
